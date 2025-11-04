@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎧 Gemini TTS Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>PEOPLE MEDIA FACTORY VOICE DUBBING</h1>
+    <p class="subtitle">Convert Telugu, English, or any text to AI speech</p>
+
+    <!-- Mode -->
+    <label>🎚️ Mode</label>
+    <select id="mode" onchange="toggleMode()">
+      <option value="single">Single Speaker</option>
+      <option value="multi">Multi Speaker</option>
+    </select>
+
+    <!-- SINGLE MODE -->
+    <div id="single-input">
+      <label>🎭 Tone</label>
+      <input type="text" id="tone" placeholder="e.g., comedy, narration">
+
+      <label>📝 Text</label>
+      <textarea id="text" placeholder="Enter text here..."></textarea>
+
+      <label>🎵 Voice</label>
+      <select id="voice_name">
+        <option value="zephyr">Zephyr (f)</option>
+        <option value="kore">Kore (f)</option>
+        <option value="leda">Leda (f)</option>
+        <option value="aoede">Aoede (f)</option>
+        <option value="callirrhoe">Callirrhoe (f)</option>
+        <option value="autonoe">Autonoe (f)</option>
+        <option value="despina">Despina (f)</option>
+        <option value="algenib">Algenib (f)</option>
+        <option value="laomedeia">Laomedeia (f)</option>
+        <option value="achernar">Achernar (f)</option>
+        <option value="gacrux">Gacrux (f)</option>
+        <option value="pulcherrima">Pulcherrima (f)</option>
+        <option value="vindemiatrix">Vindemiatrix (f)</option>
+        <option value="sulafat">Sulafat (f)</option>
+        <option value="fenrir">Fenrir (m)</option>
+        <option value="puck">Puck (m)</option>
+        <option value="iapetus">Iapetus (m)</option>
+        <option value="umbriel">Umbriel (m)</option>
+        <option value="algieba">Algieba (m)</option>
+        <option value="rasalgethi">Rasalgethi (m)</option>
+        <option value="orus">Orus (m)</option>
+        <option value="charon">Charon (m)</option>
+        <option value="enceladus">Enceladus (m)</option>
+        <option value="alnilam">Alnilam (m)</option>
+        <option value="schedar">Schedar (m)</option>
+        <option value="achird">Achird (m)</option>
+        <option value="zubenelgenubi">Zubenelgenubi (m)</option>
+        <option value="sadaltager">Sadaltager (m)</option>
+      </select>
+    </div>
+
+    <!-- MULTI MODE -->
+    <div id="multi-input" style="display:none;" class="multi-speaker-container">
+      <div class="speaker-card">
+        <h3>🗣️ Speaker 1</h3>
+        <label>Tone</label>
+        <input type="text" id="tone_1" placeholder="e.g., emotional, narration">
+        <label>Text</label>
+        <textarea id="text_1"></textarea>
+        <label>Voice</label>
+        <select id="voice_1">
+          <option value="zephyr">Zephyr (f)</option>
+          <option value="kore">Kore (f)</option>
+          <option value="leda">Leda (f)</option>
+          <option value="aoede">Aoede (f)</option>
+          <option value="callirrhoe">Callirrhoe (f)</option>
+          <option value="autonoe">Autonoe (f)</option>
+          <option value="despina">Despina (f)</option>
+          <option value="algenib">Algenib (f)</option>
+          <option value="laomedeia">Laomedeia (f)</option>
+          <option value="achernar">Achernar (f)</option>
+          <option value="gacrux">Gacrux (f)</option>
+          <option value="pulcherrima">Pulcherrima (f)</option>
+          <option value="vindemiatrix">Vindemiatrix (f)</option>
+          <option value="sulafat">Sulafat (f)</option>
+          <option value="fenrir">Fenrir (m)</option>
+          <option value="puck">Puck (m)</option>
+          <option value="iapetus">Iapetus (m)</option>
+          <option value="umbriel">Umbriel (m)</option>
+          <option value="algieba">Algieba (m)</option>
+          <option value="rasalgethi">Rasalgethi (m)</option>
+          <option value="orus">Orus (m)</option>
+          <option value="charon">Charon (m)</option>
+          <option value="enceladus">Enceladus (m)</option>
+          <option value="alnilam">Alnilam (m)</option>
+          <option value="schedar">Schedar (m)</option>
+          <option value="achird">Achird (m)</option>
+          <option value="zubenelgenubi">Zubenelgenubi (m)</option>
+          <option value="sadaltager">Sadaltager (m)</option>
+        </select>
+      </div>
+
+      <div class="speaker-card">
+        <h3>🗣️ Speaker 2</h3>
+        <label>Tone</label>
+        <input type="text" id="tone_2" placeholder="e.g., funny, calm">
+        <label>Text</label>
+        <textarea id="text_2"></textarea>
+        <label>Voice</label>
+        <select id="voice_2">
+          <option value="zephyr">Zephyr (f)</option>
+          <option value="kore">Kore (f)</option>
+          <option value="leda">Leda (f)</option>
+          <option value="aoede">Aoede (f)</option>
+          <option value="callirrhoe">Callirrhoe (f)</option>
+          <option value="autonoe">Autonoe (f)</option>
+          <option value="despina">Despina (f)</option>
+          <option value="algenib">Algenib (f)</option>
+          <option value="laomedeia">Laomedeia (f)</option>
+          <option value="achernar">Achernar (f)</option>
+          <option value="gacrux">Gacrux (f)</option>
+          <option value="pulcherrima">Pulcherrima (f)</option>
+          <option value="vindemiatrix">Vindemiatrix (f)</option>
+          <option value="sulafat">Sulafat (f)</option>
+          <option value="fenrir">Fenrir (m)</option>
+          <option value="puck">Puck (m)</option>
+          <option value="iapetus">Iapetus (m)</option>
+          <option value="umbriel">Umbriel (m)</option>
+          <option value="algieba">Algieba (m)</option>
+          <option value="rasalgethi">Rasalgethi (m)</option>
+          <option value="orus">Orus (m)</option>
+          <option value="charon">Charon (m)</option>
+          <option value="enceladus">Enceladus (m)</option>
+          <option value="alnilam">Alnilam (m)</option>
+          <option value="schedar">Schedar (m)</option>
+          <option value="achird">Achird (m)</option>
+          <option value="zubenelgenubi">Zubenelgenubi (m)</option>
+          <option value="sadaltager">Sadaltager (m)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Temperature -->
+    <label>🎚️ Temperature (0–2)</label>
+    <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.6">
+    <span id="temp-value">0.6</span>
+
+    <button id="generate">🔊 Generate Speech</button>
+
+    <div class="audio-section" id="audio-section" style="display:none;">
+      <div class="audio-card">
+        <h3>🎧 WAV Output</h3>
+        <audio id="wav-player" controls></audio>
+        <a id="download-wav" download>⬇️ Download WAV</a>
+      </div>
+      <div class="audio-card">
+        <h3>🎵 MP3 Output</h3>
+        <audio id="mp3-player" controls></audio>
+        <a id="download-mp3" download>⬇️ Download MP3</a>
+      </div>
+    </div>
+
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const tempSlider = document.getElementById("temperature");
+    const tempValue = document.getElementById("temp-value");
+    tempSlider.oninput = () => (tempValue.innerText = tempSlider.value);
+
+    function toggleMode() {
+      const mode = document.getElementById("mode").value;
+      document.getElementById("single-input").style.display = (mode === "single") ? "block" : "none";
+      document.getElementById("multi-input").style.display = (mode === "multi") ? "flex" : "none";
+    }
+
+    document.getElementById("generate").onclick = async () => {
+      const mode = document.getElementById("mode").value;
+      const temperature = document.getElementById("temperature").value;
+      let payload = { mode, temperature };
+
+      if (mode === "single") {
+        payload.text = document.getElementById("text").value;
+        payload.tone = document.getElementById("tone").value;
+        payload.voice_name = document.getElementById("voice_name").value;
+      } else {
+        payload.speaker_1 = {
+          text: document.getElementById("text_1").value,
+          tone: document.getElementById("tone_1").value,
+          voice: document.getElementById("voice_1").value
+        };
+        payload.speaker_2 = {
+          text: document.getElementById("text_2").value,
+          tone: document.getElementById("tone_2").value,
+          voice: document.getElementById("voice_2").value
+        };
+      }
+
+      const status = document.getElementById("status");
+      status.innerText = "⏳ Generating speech...";
+      document.getElementById("audio-section").style.display = "none";
+
+      const res = await fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.status === "success") {
+        status.innerText = "✅ Audio generated successfully!";
+        document.getElementById("audio-section").style.display = "flex";
+        document.getElementById("wav-player").src = data.wav_path;
+        document.getElementById("mp3-player").src = data.mp3_path;
+        document.getElementById("download-wav").href = data.wav_path;
+        document.getElementById("download-mp3").href = data.mp3_path;
+      } else {
+        status.innerText = "⚠️ Error: " + (data.error || "Failed to generate audio");
+      }
+    };
+  </script>
+</body>
+</html>
