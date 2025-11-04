@@ -14,6 +14,9 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 genai.configure(api_key=API_KEY)
 
+# Make sure ffmpeg path works on Render
+AudioSegment.converter = "/usr/bin/ffmpeg"
+
 # === Utility Functions ===
 def save_pcm_to_wav(pcm_bytes, wav_path):
     """Save PCM byte data as WAV file"""
@@ -24,7 +27,7 @@ def save_pcm_to_wav(pcm_bytes, wav_path):
         wf.writeframes(pcm_bytes)
 
 def generate_tts_audio(text, voice_name, temperature, tone=None):
-    """Generate audio with optional tone"""
+    """Generate TTS audio using Gemini"""
     if tone:
         text = f"Say this in {tone} tone: {text}"
 
@@ -58,7 +61,6 @@ def serve_audio(filename):
 
 @app.route("/generate", methods=["POST"])
 def generate_tts():
-    """Main TTS handler for single & multi-speaker"""
     data = request.get_json()
     if not data:
         return jsonify({"error": "No input data received"}), 400
@@ -84,7 +86,7 @@ def generate_tts():
         mp3_path = os.path.join(OUTPUT_FOLDER, f"{base}.mp3")
 
         save_pcm_to_wav(pcm_data, wav_path)
-        AudioSegment.from_wav(wav_path).export(mp3_path, format="mp3", bitrate="192k")
+        AudioSegment.from_file(wav_path).export(mp3_path, format="mp3", bitrate="192k")
 
         return jsonify({
             "status": "success",
@@ -114,14 +116,14 @@ def generate_tts():
             pcm1 = generate_tts_audio(s1_text, s1_voice, temperature, s1_tone)
             wav1 = os.path.join(OUTPUT_FOLDER, f"s1_{s1_voice}_{timestamp}.wav")
             save_pcm_to_wav(pcm1, wav1)
-            segments.append(AudioSegment.from_wav(wav1))
+            segments.append(AudioSegment.from_file(wav1))
             speaker_names.append(s1_voice)
 
         if s2_text:
             pcm2 = generate_tts_audio(s2_text, s2_voice, temperature, s2_tone)
             wav2 = os.path.join(OUTPUT_FOLDER, f"s2_{s2_voice}_{timestamp}.wav")
             save_pcm_to_wav(pcm2, wav2)
-            segments.append(AudioSegment.from_wav(wav2))
+            segments.append(AudioSegment.from_file(wav2))
             speaker_names.append(s2_voice)
 
         if not segments:
@@ -148,4 +150,4 @@ def generate_tts():
         return jsonify({"error": "Invalid mode"}), 400
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860, debug=True)
+    app.run(host="0.0.0.0", port=7860)
