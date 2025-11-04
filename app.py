@@ -1,7 +1,5 @@
-
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import google.generativeai as genai
-from google.genai import types
 from pydub import AudioSegment
 import os
 import wave
@@ -14,6 +12,8 @@ API_KEY = "AIzaSyDGZcGBVCO1gg6bXmYFrrG4pZjpBESHwnY"
 OUTPUT_FOLDER = "tts_output"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
+genai.configure(api_key=API_KEY)
+
 # === Utility Functions ===
 def save_pcm_to_wav(pcm_bytes, wav_path):
     """Save PCM byte data as WAV file"""
@@ -23,20 +23,21 @@ def save_pcm_to_wav(pcm_bytes, wav_path):
         wf.setframerate(24000)
         wf.writeframes(pcm_bytes)
 
-def generate_tts_audio(client, text, voice_name, temperature, tone=None):
+def generate_tts_audio(text, voice_name, temperature, tone=None):
     """Generate audio with optional tone"""
     if tone:
         text = f"Say this in {tone} tone: {text}"
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-preview-tts",
-        contents=text,
-        config=types.GenerateContentConfig(
+    model = genai.GenerativeModel(model_name="gemini-2.5-flash-preview-tts")
+
+    response = model.generate_content(
+        text,
+        generation_config=genai.GenerationConfig(
             temperature=temperature,
             response_modalities=["AUDIO"],
-            speech_config=types.SpeechConfig(
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+            speech_config=genai.types.SpeechConfig(
+                voice_config=genai.types.VoiceConfig(
+                    prebuilt_voice_config=genai.types.PrebuiltVoiceConfig(
                         voice_name=voice_name
                     )
                 )
@@ -65,7 +66,6 @@ def generate_tts():
     mode = data.get("mode", "single")
     temperature = float(data.get("temperature", 0.7))
     temp_str = str(temperature).replace('.', '_')
-    client = genai.Client(api_key=API_KEY)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # === SINGLE MODE ===
@@ -77,7 +77,7 @@ def generate_tts():
         if not text:
             return jsonify({"error": "Please enter text"}), 400
 
-        pcm_data = generate_tts_audio(client, text, voice_name, temperature, tone)
+        pcm_data = generate_tts_audio(text, voice_name, temperature, tone)
 
         base = f"{voice_name}_temp{temp_str}_{timestamp}"
         wav_path = os.path.join(OUTPUT_FOLDER, f"{base}.wav")
@@ -110,17 +110,15 @@ def generate_tts():
         segments = []
         speaker_names = []
 
-        # Speaker 1
         if s1_text:
-            pcm1 = generate_tts_audio(client, s1_text, s1_voice, temperature, s1_tone)
+            pcm1 = generate_tts_audio(s1_text, s1_voice, temperature, s1_tone)
             wav1 = os.path.join(OUTPUT_FOLDER, f"s1_{s1_voice}_{timestamp}.wav")
             save_pcm_to_wav(pcm1, wav1)
             segments.append(AudioSegment.from_wav(wav1))
             speaker_names.append(s1_voice)
 
-        # Speaker 2
         if s2_text:
-            pcm2 = generate_tts_audio(client, s2_text, s2_voice, temperature, s2_tone)
+            pcm2 = generate_tts_audio(s2_text, s2_voice, temperature, s2_tone)
             wav2 = os.path.join(OUTPUT_FOLDER, f"s2_{s2_voice}_{timestamp}.wav")
             save_pcm_to_wav(pcm2, wav2)
             segments.append(AudioSegment.from_wav(wav2))
@@ -129,7 +127,6 @@ def generate_tts():
         if not segments:
             return jsonify({"error": "No valid speaker input"}), 400
 
-        # Merge segments
         combined_audio = AudioSegment.empty()
         for seg in segments:
             combined_audio += seg
