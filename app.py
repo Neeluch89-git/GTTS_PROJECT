@@ -1,6 +1,6 @@
 
 from flask import Flask, render_template, request, jsonify, send_from_directory
-from google import genai
+import google.generativeai as genai
 from google.genai import types
 from pydub import AudioSegment
 import os
