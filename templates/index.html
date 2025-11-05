@@ -200,7 +200,7 @@
       status.innerText = "⏳ Generating speech...";
       document.getElementById("audio-section").style.display = "none";
 
-      const res = await fetch("/generate", {
+      const res = await fetch("http://127.0.0.1:7860/generate",  {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
