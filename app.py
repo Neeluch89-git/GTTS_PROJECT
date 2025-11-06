@@ -2,12 +2,13 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 import requests, os, wave, base64
 from datetime import datetime
+from pydub import AudioSegment   # <-- ✅ new import (for MP3 conversion)
 
 app = Flask(__name__)
 CORS(app)
 
 # === CONFIG ===
-API_KEY = os.getenv("GOOGLE_GENAI_API_KEY")  # store in Render environment
+API_KEY = os.getenv("GOOGLE_GENAI_API_KEY")  # Store securely in Render environment
 OUTPUT_FOLDER = "tts_output"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -19,6 +20,11 @@ def save_pcm_to_wav(pcm_bytes, wav_path):
         wf.setsampwidth(2)        # 16-bit
         wf.setframerate(24000)    # 24 kHz
         wf.writeframes(pcm_bytes)
+
+def convert_wav_to_mp3(wav_path, mp3_path):
+    """Convert WAV to MP3 using pydub"""
+    sound = AudioSegment.from_wav(wav_path)
+    sound.export(mp3_path, format="mp3")
 
 def generate_tts_audio_rest(text, voice_name="alloy", temperature=0.7, tone=None):
     """Call Google GenAI REST API to generate TTS audio"""
@@ -51,7 +57,7 @@ def generate_tts_audio_rest(text, voice_name="alloy", temperature=0.7, tone=None
 # === ROUTES ===
 @app.route("/")
 def index():
-    return render_template("index.html")  # optional frontend
+    return render_template("index.html")
 
 @app.route("/tts_output/<path:filename>")
 def serve_audio(filename):
@@ -84,12 +90,15 @@ def generate_tts():
             pcm_data = generate_tts_audio_rest(text, voice_name, temperature, tone)
             base = f"{voice_name}_temp{temp_str}_{timestamp}"
             wav_path = os.path.join(OUTPUT_FOLDER, f"{base}.wav")
+            mp3_path = os.path.join(OUTPUT_FOLDER, f"{base}.mp3")
 
             save_pcm_to_wav(pcm_data, wav_path)
+            convert_wav_to_mp3(wav_path, mp3_path)
 
             return jsonify({
                 "status": "success",
-                "wav_path": f"/tts_output/{base}.wav"
+                "wav_url": f"/tts_output/{base}.wav",
+                "mp3_url": f"/tts_output/{base}.mp3"
             })
 
         # === MULTI SPEAKER MODE ===
@@ -97,25 +106,31 @@ def generate_tts():
             s1 = data.get("speaker_1", {})
             s2 = data.get("speaker_2", {})
 
-            segments = []
-            names = []
+            result = {}
 
-            for s, label in [(s1, "s1"), (s2, "s2")]:
+            for i, s in enumerate([s1, s2], start=1):
                 text = s.get("text", "").strip()
                 voice_name = s.get("voice", "alloy").strip()
                 tone = s.get("tone", "").strip()
+
                 if text:
                     pcm_data = generate_tts_audio_rest(text, voice_name, temperature, tone)
-                    wav_file = os.path.join(OUTPUT_FOLDER, f"{label}_{timestamp}.wav")
-                    save_pcm_to_wav(pcm_data, wav_file)
-                    segments.append(wav_file)
-                    names.append(voice_name)
+                    base = f"speaker{i}_{voice_name}_{timestamp}"
+                    wav_path = os.path.join(OUTPUT_FOLDER, f"{base}.wav")
+                    mp3_path = os.path.join(OUTPUT_FOLDER, f"{base}.mp3")
 
-            if not segments:
+                    save_pcm_to_wav(pcm_data, wav_path)
+                    convert_wav_to_mp3(wav_path, mp3_path)
+
+                    result[f"speaker{i}"] = {
+                        "voice": voice_name,
+                        "wav_url": f"/tts_output/{base}.wav",
+                        "mp3_url": f"/tts_output/{base}.mp3"
+                    }
+
+            if not result:
                 return jsonify({"error": "No valid text provided"}), 400
 
-            # Optional: just return list of WAV paths
-            result = {f"{name}": path for name, path in zip(names, segments)}
             return jsonify({"status": "success", "files": result})
 
         else:

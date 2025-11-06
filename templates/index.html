@@ -164,60 +164,71 @@
   </div>
 
   <script>
-    const tempSlider = document.getElementById("temperature");
-    const tempValue = document.getElementById("temp-value");
-    tempSlider.oninput = () => (tempValue.innerText = tempSlider.value);
+  const tempSlider = document.getElementById("temperature");
+  const tempValue = document.getElementById("temp-value");
+  tempSlider.oninput = () => (tempValue.innerText = tempSlider.value);
 
-    function toggleMode() {
-      const mode = document.getElementById("mode").value;
-      document.getElementById("single-input").style.display = (mode === "single") ? "block" : "none";
-      document.getElementById("multi-input").style.display = (mode === "multi") ? "flex" : "none";
+  function toggleMode() {
+    const mode = document.getElementById("mode").value;
+    document.getElementById("single-input").style.display = (mode === "single") ? "block" : "none";
+    document.getElementById("multi-input").style.display = (mode === "multi") ? "flex" : "none";
+  }
+
+  document.getElementById("generate").onclick = async () => {
+    const mode = document.getElementById("mode").value;
+    const temperature = document.getElementById("temperature").value;
+    let payload = { mode, temperature };
+
+    if (mode === "single") {
+      payload.text = document.getElementById("text").value;
+      payload.tone = document.getElementById("tone").value;
+      payload.voice_name = document.getElementById("voice_name").value;
+    } else {
+      payload.speaker_1 = {
+        text: document.getElementById("text_1").value,
+        tone: document.getElementById("tone_1").value,
+        voice: document.getElementById("voice_1").value
+      };
+      payload.speaker_2 = {
+        text: document.getElementById("text_2").value,
+        tone: document.getElementById("tone_2").value,
+        voice: document.getElementById("voice_2").value
+      };
     }
 
-    document.getElementById("generate").onclick = async () => {
-      const mode = document.getElementById("mode").value;
-      const temperature = document.getElementById("temperature").value;
-      let payload = { mode, temperature };
+    const status = document.getElementById("status");
+    status.innerText = "⏳ Generating speech...";
+    document.getElementById("audio-section").style.display = "none";
 
-      if (mode === "single") {
-        payload.text = document.getElementById("text").value;
-        payload.tone = document.getElementById("tone").value;
-        payload.voice_name = document.getElementById("voice_name").value;
-      } else {
-        payload.speaker_1 = {
-          text: document.getElementById("text_1").value,
-          tone: document.getElementById("tone_1").value,
-          voice: document.getElementById("voice_1").value
-        };
-        payload.speaker_2 = {
-          text: document.getElementById("text_2").value,
-          tone: document.getElementById("tone_2").value,
-          voice: document.getElementById("voice_2").value
-        };
+    //  Use relative URL so it works on Render too
+    const res = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.status === "success") {
+      status.innerText = "Audio generated successfully!";
+      document.getElementById("audio-section").style.display = "flex";
+
+      //  Updated backend uses "wav_url"
+      const wavUrl = data.wav_url || (data.files ? Object.values(data.files)[0] : null);
+      if (wavUrl) {
+        document.getElementById("wav-player").src = wavUrl;
+        document.getElementById("download-wav").href = wavUrl;
+        document.getElementById("download-wav").setAttribute("download", wavUrl.split("/").pop());
       }
 
-      const status = document.getElementById("status");
-      status.innerText = "⏳ Generating speech...";
-      document.getElementById("audio-section").style.display = "none";
+      // Optional: if MP3 support added later
+      document.getElementById("mp3-player").src = wavUrl;
+      document.getElementById("download-mp3").href = wavUrl;
+    } else {
+      status.innerText = "⚠️ Error: " + (data.error || "Failed to generate audio");
+    }
+  };
+</script>
 
-      const res = await fetch("http://127.0.0.1:7860/generate",  {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (data.status === "success") {
-        status.innerText = "✅ Audio generated successfully!";
-        document.getElementById("audio-section").style.display = "flex";
-        document.getElementById("wav-player").src = data.wav_path;
-        document.getElementById("mp3-player").src = data.mp3_path;
-        document.getElementById("download-wav").href = data.wav_path;
-        document.getElementById("download-mp3").href = data.mp3_path;
-      } else {
-        status.innerText = "⚠️ Error: " + (data.error || "Failed to generate audio");
-      }
-    };
-  </script>
 </body>
 </html>
