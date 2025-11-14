@@ -1,3 +1,6 @@
-.env
+myenv/
+.venv/
+venv/
 __pycache__/
-tts_output/
+*.pyc
+tts_output
